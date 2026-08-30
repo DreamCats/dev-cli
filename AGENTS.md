@@ -1,8 +1,8 @@
 # dev-cli Agent Guide
 
 `dev-cli` is the Rust implementation of the `dev` remote development CLI. Its
-behavioral reference is the sibling Go repository `../dev-connect`; its project
-shape follows `../cg-cli`.
+project shape follows the sibling `../cg-cli`; compatibility with the retired
+Go implementation is encoded in tests and public command contracts.
 
 ## Boundaries
 
@@ -11,10 +11,11 @@ shape follows `../cg-cli`.
 - `src/main.rs` is a thin process shell. `src/lib.rs` owns lifecycle and local
   history. `src/cli.rs` only parses Clap arguments. Domain behavior stays in
   `src/commands`, `config`, `transport`, and `stats`.
-- Preserve `~/.config/dev-connect/config.yaml`, JSON/NDJSON schemas, exit codes,
+- Preserve `~/.config/dev-cli/config.yaml`, JSON/NDJSON schemas, exit codes,
   stdout/stderr separation, SSH/SCP arguments, and the Go command surface.
-- The Go implementation is the behavior oracle. A command is not fully
-  compatible until a local fixture or differential test covers it.
+- The repository has no runtime or source dependency on the retired Go
+  implementation. A command is not fully compatible until a local fixture or
+  differential test covers its public contract.
 - Never record command arguments, paths, file contents, stdout, stderr, tokens,
   or credentials in history.
 

@@ -73,7 +73,7 @@ fn config_round_trips_the_existing_yaml_and_json_contract() {
             "已添加主机: sgdev (maifeng@10.0.0.1)",
         ));
 
-    let yaml = fs::read_to_string(root.path().join("dev-connect/config.yaml")).unwrap();
+    let yaml = fs::read_to_string(root.path().join("dev-cli/config.yaml")).unwrap();
     for expected in [
         "default_host: sgdev",
         "os: null",
@@ -96,6 +96,7 @@ fn config_round_trips_the_existing_yaml_and_json_contract() {
         .stdout(predicate::str::contains("\"os\": \"posix\""))
         .stdout(predicate::str::contains("\"shell\": null"))
         .stdout(predicate::str::contains("\"repo_roots\": []"));
+    assert!(!root.path().join("dev-connect").exists());
 }
 
 #[test]
@@ -114,8 +115,9 @@ fn history_records_only_redacted_command_metadata() {
         .success()
         .stdout(predicate::str::contains("\"command\": \"version\""))
         .stdout(predicate::str::contains("\"session_id\": \"test-session\""));
-    let history = fs::read_to_string(root.path().join("dev-connect/history.jsonl")).unwrap();
+    let history = fs::read_to_string(root.path().join("dev-cli/history.jsonl")).unwrap();
     assert!(!history.contains("--limit"));
+    assert!(!root.path().join("dev-connect").exists());
 }
 
 #[test]

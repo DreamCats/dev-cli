@@ -40,7 +40,7 @@ installer supports Apple Silicon macOS, Intel macOS, and x86_64 Linux. It
 downloads the matching GitHub Release archive and verifies it against the
 published `SHA256SUMS` before installing.
 
-Existing `~/.config/dev-connect/config.yaml` files remain compatible.
+Configuration and private local history live under `~/.config/dev-cli/`.
 
 Install from source with Rust 1.85+:
 
@@ -113,10 +113,10 @@ Run `dev <command> --help` for command-specific flags.
 
 ## Configuration
 
-`dev-cli` intentionally reuses the existing configuration root:
+`dev-cli` uses its own configuration root:
 
 ```text
-~/.config/dev-connect/
+~/.config/dev-cli/
 ├── config.yaml
 ├── stats.json
 └── history.jsonl
@@ -140,9 +140,9 @@ src/stats.rs             local counters and private JSONL history
 tests/cli.rs             CLI and fake-SSH acceptance tests
 ```
 
-The Go repository `../dev-connect` remains the behavioral oracle. A command is
-not considered fully compatible until a local fixture or differential test
-covers its contract.
+Compatibility with the retired Go implementation is preserved through public
+command contracts, local fixtures, and differential tests. The repository has
+no runtime or source dependency on the former Go source tree.
 
 ## Release model
 

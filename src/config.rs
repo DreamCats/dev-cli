@@ -7,9 +7,9 @@ use crate::model::{self, AppConfig, HostConfig};
 
 pub(crate) fn dir() -> PathBuf {
     if let Some(base) = env::var_os("XDG_CONFIG_HOME") {
-        return PathBuf::from(base).join("dev-connect");
+        return PathBuf::from(base).join("dev-cli");
     }
-    home_dir().join(".config/dev-connect")
+    home_dir().join(".config/dev-cli")
 }
 
 pub(crate) fn file() -> PathBuf {

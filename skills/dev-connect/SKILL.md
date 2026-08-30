@@ -6,7 +6,7 @@ description: "远程开发机文件交互 CLI。当用户需要查看远程目�
 # dev-connect 远程开发机交互
 
 `dev` 是 Rust 实现的远程开发机 CLI，封装 SSH/SCP，并兼容
-`~/.config/dev-connect/config.yaml`。
+`~/.config/dev-cli/config.yaml`。
 
 优先使用 JSON 输出给 Agent 消费：
 
@@ -103,4 +103,3 @@ dev history --limit 20
 - 长命令使用 watch；未知大文件先用结构化读取命令。
 - `history` 只记录命令名、结果、耗时和可选 `DEV_SESSION_ID`，绝不记录
   参数、路径、输出或文件内容。
-
