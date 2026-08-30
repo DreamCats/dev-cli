@@ -41,7 +41,11 @@ pub(super) fn dispatch(command: Command, out: Output) -> Result<i32> {
         Command::ExecWatch(args) => exec_watch(args, out),
         Command::Patch(args) => patch(args, out),
         Command::Cg(args) => cg(args.args, out),
-        Command::Version | Command::Config(_) | Command::History(_) | Command::Stats(_) => {
+        Command::Version
+        | Command::Update { .. }
+        | Command::Config(_)
+        | Command::History(_)
+        | Command::Stats(_) => {
             unreachable!("handled by parent dispatcher")
         }
     }

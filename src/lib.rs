@@ -5,6 +5,7 @@ mod model;
 mod output;
 mod stats;
 mod transport;
+mod update;
 
 use std::time::Instant;
 

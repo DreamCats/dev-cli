@@ -44,6 +44,7 @@ fn exposes_the_complete_go_command_surface() {
         "config",
         "stats",
         "version",
+        "update",
     ] {
         assert!(
             stdout.contains(command),

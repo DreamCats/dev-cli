@@ -78,6 +78,12 @@ pub(crate) enum Command {
     Stats(StatsArgs),
     /// 显示版本
     Version,
+    /// 检查 GitHub Release 并安装最新兼容版本
+    Update {
+        /// 只检查是否有新版本，不修改当前二进制
+        #[arg(long)]
+        check: bool,
+    },
 }
 
 impl Command {
@@ -109,6 +115,7 @@ impl Command {
             Self::Config(value) => value.tracking_name(),
             Self::Stats(_) => "stats",
             Self::Version => "version",
+            Self::Update { .. } => "update",
         }
     }
 }

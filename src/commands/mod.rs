@@ -8,7 +8,7 @@ use crate::{
     config,
     model::{self, HostConfig},
     output::Output,
-    stats,
+    stats, update,
 };
 
 mod remote;
@@ -23,8 +23,29 @@ pub(crate) fn dispatch(cli: cli::Cli) -> Result<i32> {
             println!("dev {}", env!("CARGO_PKG_VERSION"));
             Ok(0)
         }
+        Command::Update { check } => update_command(check, out),
         command => remote::dispatch(command, out),
     }
+}
+
+fn update_command(check: bool, out: Output) -> Result<i32> {
+    let report = update::run(check)?;
+    if out.json {
+        out.json(&report)?;
+    } else if report.updated {
+        println!(
+            "已更新 dev: {} -> {}",
+            report.current_version, report.latest_version
+        );
+    } else if report.current_version == report.latest_version {
+        println!("dev 已是最新版本: {}", report.current_version);
+    } else {
+        println!(
+            "发现新版本: {} -> {}，运行 `dev update` 安装",
+            report.current_version, report.latest_version
+        );
+    }
+    Ok(0)
 }
 
 fn config_command(args: cli::ConfigArgs, out: Output) -> Result<i32> {

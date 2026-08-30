@@ -27,3 +27,13 @@ cargo test --all-targets --all-features
 cargo build --release
 ```
 
+## Releases
+
+- `Cargo.toml` is the single source of truth for the application version.
+- A push to `main` or a pull request runs CI only. A release is created only by
+  pushing a matching `vX.Y.Z` tag; the release workflow rejects a tag whose
+  version differs from `Cargo.toml`.
+- Run the required checks before creating a release tag. Do not force-move or
+  re-push a published release tag.
+- Keep the `dev-<target>.tar.gz` asset names and `SHA256SUMS` manifest stable:
+  `scripts/install.sh` and `dev update` verify and consume that contract.
