@@ -1503,13 +1503,19 @@ fn git_snapshot(args: cli::RepoCwdArgs, out: Output) -> Result<i32> {
             ))?;
         } else {
             out.stdout(&format!(
-                "repo: {}\nbranch: {}\nhead: {} {}\ndirty: {}\n",
+                "repo: {}\nbranch: {}\nhead: {} {}\nhead full: {}\ndirty: {}\n",
                 payload["repo_root"],
                 payload["branch"],
                 payload["head"],
                 payload["head_subject"],
+                payload["head_full"],
                 payload["dirty"]
             ))?;
+            if let Some(origin) = non_empty_str(&payload["origin_url"]) {
+                out.stdout(&format!("origin: {origin}\n"))?;
+            } else if let Some(error) = non_empty_str(&payload["origin_error"]) {
+                out.stdout(&format!("origin: unavailable ({error})\n"))?;
+            }
             for section in ["status", "diff_stat", "staged_diff_stat"] {
                 if let Some(value) = non_empty_str(&payload[section]) {
                     out.stdout(&format!("\n{}:\n{value}", section.replace('_', " ")))?;

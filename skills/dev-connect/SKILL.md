@@ -72,6 +72,11 @@ dev --json cg context --repo ORG/REPO "task" --summary
 `repo resolve` 依赖主机 `repo_roots`。`patch` 使用 Codex 结构化格式并在
 失败时返回 path、hunk 和相似候选。远端无 `cg` 时先执行 `dev cg install`。
 
+`dev --json git-snapshot --cwd REPO` 保留短 SHA 字段 `head`，并额外返回完整
+SHA `head_full`。`origin_url` 是远端仓库的 origin URL；如果 origin 不存在或
+读取失败，该字段为 `null`，具体 Git 错误保留在 `origin_error`，不得把它解释
+为“仓库确定没有远端”。
+
 ## Windows OpenSSH
 
 ```bash

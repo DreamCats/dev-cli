@@ -95,6 +95,12 @@ dev --json history --limit 20
 
 Run `dev <command> --help` for command-specific flags.
 
+`dev --json git-snapshot --cwd REPO` preserves the existing short `head` field
+and also returns `head_full` for the complete commit SHA. `origin_url` contains
+the configured `origin` URL; when the remote is unavailable it is `null` and
+`origin_error` contains the Git error instead of silently treating the lookup
+as an empty remote.
+
 ## Commands
 
 | Commands | Purpose |
