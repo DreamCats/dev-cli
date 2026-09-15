@@ -69,9 +69,6 @@ pub(crate) enum Command {
     Repo(RepoArgs),
     /// 按语言/仓库类型执行范围化验证
     Verify(VerifyArgs),
-    /// 远程 cg 索引和知识图谱查询
-    #[command(trailing_var_arg = true)]
-    Cg(RawArgs),
     /// 管理主机配置
     Config(ConfigArgs),
     /// 显示命令使用统计和优化建议
@@ -111,7 +108,6 @@ impl Command {
             Self::GitSnapshot(_) => "git-snapshot",
             Self::Repo(_) => "repo resolve",
             Self::Verify(_) => "verify go",
-            Self::Cg(_) => "cg",
             Self::Config(value) => value.tracking_name(),
             Self::Stats(_) => "stats",
             Self::Version => "version",

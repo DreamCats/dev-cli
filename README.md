@@ -1,9 +1,9 @@
 # dev-cli
 
 `dev-cli` is a Rust remote-development CLI built for humans and coding agents.
-The binary remains `dev`; it preserves the Go `dev-connect` command surface,
-configuration format, JSON/NDJSON contracts, and SSH/SCP behavior while running
-as a single local process with no daemon.
+The binary remains `dev`; it preserves the configuration format, supported
+JSON/NDJSON contracts, and SSH/SCP behavior while running as a single local
+process with no daemon.
 
 ## Features
 
@@ -14,7 +14,6 @@ as a single local process with no daemon.
 - Precise writes: `write`, `edit`, `diff`, and structured `patch`.
 - Repository helpers: `repo-status`, `repo-diff`, `git-snapshot`,
   `repo resolve`, and `verify go --changed`.
-- Remote code graph installation and transparent `cg` proxying.
 - Existing YAML configuration compatibility plus local, redacted `stats` and
   `history`.
 - POSIX hosts and the Go baseline's explicit Windows command subset.
@@ -22,7 +21,7 @@ as a single local process with no daemon.
 
 ## Install
 
-Install the latest verified release and the `dev-connect` Skill:
+Install the latest verified release and the `dev-cli` Skill:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/DreamCats/dev-cli/main/scripts/install.sh | sh
@@ -32,7 +31,7 @@ This installs:
 
 ```text
 ~/.local/bin/dev
-~/.agents/skills/dev-connect/SKILL.md
+~/.agents/skills/dev-cli/SKILL.md
 ```
 
 Override either location with `DEV_INSTALL_DIR` or `DEV_SKILL_DIR`. The
@@ -112,7 +111,6 @@ as an empty remote.
 | `write`, `edit`, `diff`, `patch` | Apply explicit remote file changes. |
 | `repo-status`, `repo-diff`, `git-snapshot` | Inspect remote Git state. |
 | `repo resolve`, `verify` | Resolve repositories and run scoped checks. |
-| `cg` | Install or proxy the remote Rust code-graph CLI. |
 | `config` | Manage compatible host configuration. |
 | `stats`, `history` | Inspect private local usage metadata. |
 | `version`, `update [--check]` | Inspect or update the installed CLI. |
@@ -146,9 +144,10 @@ src/stats.rs             local counters and private JSONL history
 tests/cli.rs             CLI and fake-SSH acceptance tests
 ```
 
-Compatibility with the retired Go implementation is preserved through public
-command contracts, local fixtures, and differential tests. The repository has
-no runtime or source dependency on the former Go source tree.
+Compatibility expectations inherited from the retired Go implementation are
+encoded in the remaining public command contracts, local fixtures, and
+differential tests. The repository has no runtime or source dependency on the
+former Go source tree.
 
 ## Release model
 
@@ -178,4 +177,4 @@ make build
 
 Required checks are formatting, Clippy with warnings denied, all tests, and a
 release build. See [AGENTS.md](AGENTS.md) for repository rules and
-[skills/dev-connect/SKILL.md](skills/dev-connect/SKILL.md) for agent usage.
+[skills/dev-cli/SKILL.md](skills/dev-cli/SKILL.md) for agent usage.

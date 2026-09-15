@@ -3,7 +3,7 @@ set -eu
 
 repo="DreamCats/dev-cli"
 bin_dir="${DEV_INSTALL_DIR:-$HOME/.local/bin}"
-skill_dir="${DEV_SKILL_DIR:-$HOME/.agents/skills/dev-connect}"
+skill_dir="${DEV_SKILL_DIR:-$HOME/.agents/skills/dev-cli}"
 os="$(uname -s)"
 arch="$(uname -m)"
 
@@ -16,7 +16,7 @@ esac
 
 archive="dev-$target.tar.gz"
 base="https://github.com/$repo/releases/latest/download"
-skill_url="https://raw.githubusercontent.com/$repo/main/skills/dev-connect/SKILL.md"
+skill_url="https://raw.githubusercontent.com/$repo/main/skills/dev-cli/SKILL.md"
 temp="$(mktemp -d)"
 trap 'rm -rf "$temp"' EXIT
 
@@ -36,6 +36,13 @@ mkdir -p "$bin_dir"
 install -m 755 "$temp/dev" "$bin_dir/dev"
 mkdir -p "$skill_dir"
 install -m 644 "$temp/SKILL.md" "$skill_dir/SKILL.md"
+if [ -z "${DEV_SKILL_DIR+x}" ]; then
+  legacy_skill_dir="$HOME/.agents/skills/dev-connect"
+  if grep -q '^name: dev-connect$' "$legacy_skill_dir/SKILL.md" 2>/dev/null; then
+    rm -f "$legacy_skill_dir/SKILL.md"
+    rmdir "$legacy_skill_dir" 2>/dev/null || true
+  fi
+fi
 echo "installed dev to $bin_dir/dev"
-echo "installed dev-connect Skill to $skill_dir/SKILL.md"
+echo "installed dev-cli Skill to $skill_dir/SKILL.md"
 echo "dev configuration lives at ~/.config/dev-cli/config.yaml"

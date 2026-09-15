@@ -13,7 +13,7 @@ fn config_root() -> TempDir {
 }
 
 #[test]
-fn exposes_the_complete_go_command_surface() {
+fn exposes_the_supported_command_surface() {
     let output = dev().arg("--help").output().expect("help runs");
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -40,7 +40,6 @@ fn exposes_the_complete_go_command_surface() {
         "git-snapshot",
         "repo",
         "verify",
-        "cg",
         "config",
         "stats",
         "version",
@@ -51,6 +50,15 @@ fn exposes_the_complete_go_command_surface() {
             "help missing {command}:\n{stdout}"
         );
     }
+}
+
+#[test]
+fn rejects_the_removed_cg_wrapper() {
+    dev()
+        .arg("cg")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("unrecognized subcommand 'cg'"));
 }
 
 #[test]

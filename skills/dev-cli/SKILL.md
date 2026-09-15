@@ -1,9 +1,9 @@
 ---
-name: dev-connect
+name: dev-cli
 description: "远程开发机文件交互 CLI。当用户需要查看远程目录、读取远程文件、传输文件、搜索代码、执行命令、查看日志、写入文件、编辑文件、比较文件差异时使用此 skill。"
 ---
 
-# dev-connect 远程开发机交互
+# dev-cli 远程开发机交互
 
 `dev` 是 Rust 实现的远程开发机 CLI，封装 SSH/SCP，并兼容
 `~/.config/dev-cli/config.yaml`。
@@ -54,7 +54,7 @@ dev edit line PATH NUM CONTENT
 执行本地脚本时用 `--stdin -` 或 `--stdin-file`，不要使用 base64/heredoc
 多层转义。
 
-## Git、Patch 和 cg
+## Git 和 Patch
 
 ```bash
 dev repo-status --cwd REPO --json
@@ -63,14 +63,10 @@ dev git-snapshot --cwd REPO
 dev repo resolve ORG/REPO
 dev verify go --cwd REPO --changed [--also PKG]
 dev patch --cwd REPO [--check] < changes.patch
-dev cg install
-dev cg init --cwd REPO --index
-dev --json cg overview --cwd REPO
-dev --json cg context --repo ORG/REPO "task" --summary
 ```
 
 `repo resolve` 依赖主机 `repo_roots`。`patch` 使用 Codex 结构化格式并在
-失败时返回 path、hunk 和相似候选。远端无 `cg` 时先执行 `dev cg install`。
+失败时返回 path、hunk 和相似候选。
 
 `dev --json git-snapshot --cwd REPO` 保留短 SHA 字段 `head`，并额外返回完整
 SHA `head_full`。`origin_url` 是远端仓库的 origin URL；如果 origin 不存在或

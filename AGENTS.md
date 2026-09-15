@@ -11,8 +11,9 @@ Go implementation is encoded in tests and public command contracts.
 - `src/main.rs` is a thin process shell. `src/lib.rs` owns lifecycle and local
   history. `src/cli.rs` only parses Clap arguments. Domain behavior stays in
   `src/commands`, `config`, `transport`, and `stats`.
-- Preserve `~/.config/dev-cli/config.yaml`, JSON/NDJSON schemas, exit codes,
-  stdout/stderr separation, SSH/SCP arguments, and the Go command surface.
+- Preserve `~/.config/dev-cli/config.yaml`, supported JSON/NDJSON schemas, exit
+  codes, stdout/stderr separation, SSH/SCP arguments, and public command
+  contracts.
 - The repository has no runtime or source dependency on the retired Go
   implementation. A command is not fully compatible until a local fixture or
   differential test covers its public contract.
