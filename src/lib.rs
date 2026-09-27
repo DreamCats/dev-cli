@@ -17,8 +17,7 @@ pub fn run() -> Result<i32> {
     let started = Instant::now();
     let result = commands::dispatch(cli);
     if !tracked.is_empty() {
-        stats::record(tracked);
-        stats::record_history(
+        stats::record(
             tracked,
             result.as_ref().is_ok_and(|code| *code == 0),
             started.elapsed(),

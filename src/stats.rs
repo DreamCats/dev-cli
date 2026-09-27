@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::{Result, bail};
 use chrono::{DateTime, Utc};
+use fs2::FileExt;
 use serde::{Deserialize, Serialize};
 
 use crate::config;
@@ -29,26 +30,34 @@ pub(crate) struct HistoryEvent {
     pub(crate) session_id: String,
 }
 
-pub(crate) fn load() -> BTreeMap<String, Entry> {
+fn load_unlocked() -> BTreeMap<String, Entry> {
     fs::read(config::dir().join("stats.json"))
         .ok()
         .and_then(|raw| serde_json::from_slice(&raw).ok())
         .unwrap_or_default()
 }
 
-pub(crate) fn record(command: &str) {
-    let mut data = load();
+pub(crate) fn load() -> BTreeMap<String, Entry> {
+    with_lock(false, || Ok(load_unlocked())).unwrap_or_else(|_| load_unlocked())
+}
+
+pub(crate) fn record(command: &str, success: bool, elapsed: Duration) {
+    let _ = with_lock(true, || {
+        record_stats_inner(command)?;
+        record_history_inner(command, success, elapsed)
+    });
+}
+
+fn record_stats_inner(command: &str) -> Result<()> {
+    let mut data = load_unlocked();
     let entry = data.entry(command.into()).or_default();
     entry.count += 1;
     entry.last_used = now();
-    let _ = fs::create_dir_all(config::dir());
-    if let Ok(raw) = serde_json::to_vec_pretty(&data) {
-        let _ = fs::write(config::dir().join("stats.json"), raw);
-    }
-}
-
-pub(crate) fn record_history(command: &str, success: bool, elapsed: Duration) {
-    let _ = record_history_inner(command, success, elapsed);
+    fs::write(
+        config::dir().join("stats.json"),
+        serde_json::to_vec_pretty(&data)?,
+    )?;
+    Ok(())
 }
 
 fn record_history_inner(command: &str, success: bool, elapsed: Duration) -> Result<()> {
@@ -67,7 +76,7 @@ fn record_history_inner(command: &str, success: bool, elapsed: Duration) -> Resu
         command: command.into(),
         success,
         duration_ms: elapsed.as_millis(),
-        session_id: env::var("DEV_SESSION_ID").unwrap_or_default(),
+        session_id: session_id(),
     };
     let mut options = fs::OpenOptions::new();
     options.create(true).append(true);
@@ -82,8 +91,9 @@ fn record_history_inner(command: &str, success: bool, elapsed: Duration) -> Resu
         use std::os::unix::fs::PermissionsExt;
         file.set_permissions(fs::Permissions::from_mode(0o600))?;
     }
-    serde_json::to_writer(&mut file, &event)?;
-    file.write_all(b"\n")?;
+    let mut line = serde_json::to_vec(&event)?;
+    line.push(b'\n');
+    file.write_all(&line)?;
     Ok(())
 }
 
@@ -91,6 +101,10 @@ pub(crate) fn load_history(limit: usize) -> Result<Vec<HistoryEvent>> {
     if limit == 0 {
         bail!("history limit must be positive");
     }
+    with_lock(false, || load_history_unlocked(limit))
+}
+
+fn load_history_unlocked(limit: usize) -> Result<Vec<HistoryEvent>> {
     let path = config::dir().join("history.jsonl");
     let file = match fs::File::open(path) {
         Ok(file) => file,
@@ -108,6 +122,31 @@ pub(crate) fn load_history(limit: usize) -> Result<Vec<HistoryEvent>> {
     }
     events.reverse();
     Ok(events)
+}
+
+fn with_lock<T>(exclusive: bool, operation: impl FnOnce() -> Result<T>) -> Result<T> {
+    fs::create_dir_all(config::dir())?;
+    let mut options = fs::OpenOptions::new();
+    options.create(true).read(true).write(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let lock = options.open(config::dir().join("usage.lock"))?;
+    if exclusive {
+        FileExt::lock_exclusive(&lock)?;
+    } else {
+        FileExt::lock_shared(&lock)?;
+    }
+    operation()
+}
+
+fn session_id() -> String {
+    ["DEV_SESSION_ID", "CODEX_THREAD_ID", "CODEX_SESSION_ID"]
+        .into_iter()
+        .find_map(|name| env::var(name).ok().filter(|value| !value.is_empty()))
+        .unwrap_or_default()
 }
 
 fn now() -> String {

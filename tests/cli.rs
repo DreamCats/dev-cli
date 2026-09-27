@@ -1,4 +1,8 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::Path,
+    process::{Command as StdCommand, Stdio},
+};
 
 use assert_cmd::Command;
 use assert_fs::TempDir;
@@ -129,6 +133,59 @@ fn history_records_only_redacted_command_metadata() {
 }
 
 #[test]
+fn history_uses_codex_thread_id_when_no_explicit_session_is_set() {
+    let root = config_root();
+    dev()
+        .env("XDG_CONFIG_HOME", root.path())
+        .env_remove("DEV_SESSION_ID")
+        .env("CODEX_THREAD_ID", "codex-thread")
+        .args(["version"])
+        .assert()
+        .success();
+    dev()
+        .env("XDG_CONFIG_HOME", root.path())
+        .args(["--json", "history", "--limit", "1"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"session_id\": \"codex-thread\""));
+}
+
+#[test]
+fn concurrent_processes_do_not_lose_or_corrupt_usage_records() {
+    let root = config_root();
+    let executable = assert_cmd::cargo::cargo_bin("dev");
+    let mut children = (0..64)
+        .map(|_| {
+            StdCommand::new(&executable)
+                .env("XDG_CONFIG_HOME", root.path())
+                .env_remove("DEV_SESSION_ID")
+                .env_remove("CODEX_THREAD_ID")
+                .env_remove("CODEX_SESSION_ID")
+                .arg("version")
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .expect("spawn dev")
+        })
+        .collect::<Vec<_>>();
+    for child in &mut children {
+        assert!(child.wait().expect("wait for dev").success());
+    }
+
+    let directory = root.path().join("dev-cli");
+    let stats: serde_json::Value =
+        serde_json::from_slice(&fs::read(directory.join("stats.json")).unwrap()).unwrap();
+    assert_eq!(stats["version"]["count"], 64);
+    let history = fs::read_to_string(directory.join("history.jsonl")).unwrap();
+    let events = history
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(events.len(), 64);
+    assert!(events.iter().all(|event| event["command"] == "version"));
+}
+
+#[test]
 fn exec_and_grep_preserve_json_and_fail_loud_contracts() {
     let root = config_root();
     let fake = TempDir::new().unwrap();
@@ -166,6 +223,36 @@ fn exec_and_grep_preserve_json_and_fail_loud_contracts() {
         .success()
         .stdout(predicate::str::contains("\"tool\": \"grep\""))
         .stdout(predicate::str::contains("\"count\": 1"));
+
+    dev()
+        .env("XDG_CONFIG_HOME", root.path())
+        .env("PATH", &path)
+        .env("FAKE_SSH_CALLS", &calls)
+        .env("FAKE_SSH_STDOUT", "a.rs:2:needle\\n")
+        .args([
+            "--json",
+            "grep",
+            "needle",
+            ".",
+            "--glob",
+            "*.rs",
+            "--include",
+            "*.toml",
+            "--max-count",
+            "3",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"count\": 1"));
+
+    dev()
+        .env("XDG_CONFIG_HOME", root.path())
+        .env("PATH", &path)
+        .env("FAKE_SSH_CALLS", &calls)
+        .env("FAKE_SSH_STDOUT", "./src/main.rs\\n")
+        .args(["find", "*.rs", ".", "--type", "f"])
+        .assert()
+        .success();
 }
 
 fn write_fake_ssh(directory: &Path, calls: &Path) {

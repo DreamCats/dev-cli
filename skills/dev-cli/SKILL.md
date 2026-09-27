@@ -25,8 +25,8 @@ dev slice FILE --range START:END [--cwd CWD] [--host HOST]
 dev slice FILE --around TEXT [--lines N] [--context N] [--cwd CWD]
 dev head FILE [--lines N] [--cwd CWD]
 dev tail FILE [--lines N] [--cwd CWD]
-dev grep PATTERN [PATH] [--cwd CWD] [--include GLOB] [-i] [--context N] [--max-matches N] [--group]
-dev find NAME [PATH] [--cwd CWD] [--type f|d]
+dev grep PATTERN [PATH] [--cwd CWD] [--include GLOB]... [-i] [--context N] [--max-matches N] [--group]
+dev find NAME [PATH] [--cwd CWD] [--file-type f|d]
 dev tree [PATH] [--cwd CWD] [--depth N]
 ```
 
@@ -102,5 +102,6 @@ dev history --limit 20
 - 给 Agent 解析的结果加全局 `--json`。
 - `exec` 后的 `--json` 可能属于远端命令，不会提升为全局 JSON。
 - 长命令使用 watch；未知大文件先用结构化读取命令。
-- `history` 只记录命令名、结果、耗时和可选 `DEV_SESSION_ID`，绝不记录
+- `history` 只记录命令名、结果、耗时和可选会话 ID（显式
+  `DEV_SESSION_ID` 优先，否则自动使用 Codex 会话变量），绝不记录
   参数、路径、输出或文件内容。

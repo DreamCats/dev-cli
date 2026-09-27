@@ -636,7 +636,7 @@ fn build_grep_cmd(
     pattern: &str,
     path: &str,
     use_rg: bool,
-    include: &str,
+    includes: &[String],
     line_number: bool,
     context: i32,
     max_matches: Option<usize>,
@@ -659,7 +659,7 @@ fn build_grep_cmd(
     if let Some(max) = max_matches {
         parts.extend(["-m".into(), max.to_string()]);
     }
-    if !include.is_empty() {
+    for include in includes {
         if use_rg {
             parts.extend(["--glob".into(), transport::shell_quote(include)]);
         } else {
@@ -678,7 +678,7 @@ fn build_windows_grep_cmd(
     pattern: &str,
     path: &str,
     cwd: &str,
-    include: &str,
+    includes: &[String],
     line_number: bool,
     context: i32,
     max_matches: Option<usize>,
@@ -694,7 +694,7 @@ fn build_windows_grep_cmd(
     steps.push(format!(r#"
 $pattern = {}
 $root = Resolve-DevPath {}
-$include = {}
+$includes = @({})
 $lineNumber = {}
 $context = {context}
 $maxMatches = {}
@@ -702,8 +702,11 @@ $regexOptions = if ({}) {{ [System.Text.RegularExpressions.RegexOptions]::Ignore
 $count = 0
 if (Test-Path -LiteralPath $root -PathType Leaf) {{
   $files = @(Get-Item -LiteralPath $root)
-}} elseif ($include -ne "") {{
-  $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force -Filter $include -ErrorAction Stop)
+}} elseif ($includes.Count -gt 0) {{
+  $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force -ErrorAction Stop | Where-Object {{
+    $name = $_.Name
+    @($includes | Where-Object {{ $name -like $_ }}).Count -gt 0
+  }})
 }} else {{
   $files = @(Get-ChildItem -LiteralPath $root -Recurse -File -Force -ErrorAction Stop)
 }}
@@ -731,7 +734,8 @@ foreach ($file in $files) {{
 if ($count -eq 0) {{ exit 1 }}
 "#,
         transport::powershell_quote(pattern), transport::powershell_quote(path),
-        transport::powershell_quote(include), ps_bool(line_number), max_matches.unwrap_or(0),
+        includes.iter().map(|value| transport::powershell_quote(value)).collect::<Vec<_>>().join(", "),
+        ps_bool(line_number), max_matches.unwrap_or(0),
         ps_bool(ignore_case)
     ));
     transport::powershell_command(&steps.join("\n"))
@@ -1972,13 +1976,13 @@ mod tests {
                 "hello world",
                 "~/repo",
                 true,
-                "*.go",
+                &["*.go".into(), "*.rs".into()],
                 true,
                 2,
                 Some(3),
                 true
             ),
-            "rg -n -i -C 2 -m 3 --glob '*.go' 'hello world' ~/repo"
+            "rg -n -i -C 2 -m 3 --glob '*.go' --glob '*.rs' 'hello world' ~/repo"
         );
         let (matches, files) = parse_grep_output(
             "a.py-1-before\na.py:2:match\na.py-3-after\n--\nb.py:10:hit\n",

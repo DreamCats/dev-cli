@@ -4,12 +4,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-repo = sys.argv[1].strip("/")
+repo = sys.argv[1]
 roots = json.loads(sys.argv[2])
 if repo.startswith("/") or repo.startswith("~/"):
     path = Path(os.path.expanduser(repo))
     print(json.dumps({"success": path.exists(), "input": repo, "path": str(path) if path.exists() else "", "searched_roots": [], "source": "direct", "error": "" if path.exists() else "path does not exist"}, ensure_ascii=False))
     sys.exit(0 if path.exists() else 1)
+repo = repo.strip("/")
 expanded_roots = []
 for root in roots:
     expanded = os.path.expanduser(root)
@@ -32,4 +33,3 @@ for root in expanded_roots:
         sys.exit(0)
 print(json.dumps({"success": False, "input": repo, "path": "", "searched_roots": expanded_roots, "source": "search", "error": "repo not found"}, ensure_ascii=False))
 sys.exit(1)
-

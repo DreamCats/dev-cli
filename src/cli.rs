@@ -180,15 +180,15 @@ pub(crate) struct GrepArgs {
     pub(crate) host: HostArg,
     #[arg(long, default_value = "")]
     pub(crate) cwd: String,
-    #[arg(long, short = 'g', default_value = "")]
-    pub(crate) include: String,
+    #[arg(long, short = 'g', visible_alias = "glob")]
+    pub(crate) include: Vec<String>,
     #[arg(long, short = 'i')]
     pub(crate) ignore_case: bool,
     #[arg(long, short = 'N')]
     pub(crate) no_line_number: bool,
     #[arg(long, short = 'C', default_value = "0")]
     pub(crate) context: i32,
-    #[arg(long)]
+    #[arg(long, visible_alias = "max-count")]
     pub(crate) max_matches: Option<usize>,
     #[arg(long)]
     pub(crate) group: bool,
@@ -203,7 +203,7 @@ pub(crate) struct FindArgs {
     pub(crate) host: HostArg,
     #[arg(long, default_value = "")]
     pub(crate) cwd: String,
-    #[arg(long, short = 't', default_value = "")]
+    #[arg(long, short = 't', visible_alias = "type", default_value = "")]
     pub(crate) file_type: String,
     pub(crate) name: String,
     #[arg(default_value = ".")]
