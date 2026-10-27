@@ -374,7 +374,7 @@ struct ExecOptions {
 fn exec(args: Vec<String>, out: Output) -> Result<i32> {
     let options = parse_exec(args)?;
     let stdin = read_optional_stdin(options.stdin, options.stdin_file)?;
-    let command = shell_join(&options.command);
+    let command = join_exec_command(&options.command);
     if options.watch {
         return exec_watch_values(
             &command,
@@ -459,6 +459,16 @@ fn next_value<'a>(args: &'a [String], index: &mut usize) -> Result<&'a str> {
         .ok_or_else(|| anyhow!("{} requires value", args[*index - 1]))
 }
 
+/// A single argument is a whole shell command and is passed through verbatim,
+/// so `dev exec 'ls y && grep x'` behaves like ssh instead of turning the whole
+/// pipeline into one quoted word. Only multi-argument argv is quoted per element.
+fn join_exec_command(parts: &[String]) -> String {
+    if parts.len() == 1 {
+        return parts[0].clone();
+    }
+    shell_join(parts)
+}
+
 fn shell_join(parts: &[String]) -> String {
     parts
         .iter()
@@ -511,6 +521,11 @@ fn exec_values(
     } else {
         out.stdout(&result.stdout)?;
         out.stderr(&result.stderr)?;
+        if result.return_code == 127 {
+            out.stderr(&format!(
+                "dev: 远端找不到命令，实际执行的是: {effective}\n提示: dev exec 把命令交给远端 shell 解析；单个参数原样传入，多个参数才逐个加引号。\n"
+            ))?;
+        }
     }
     Ok(if result.success() {
         0
@@ -1955,6 +1970,18 @@ mod tests {
     fn shell_join_quotes_only_when_needed() {
         assert_eq!(
             shell_join(&["go".into(), "test".into(), "./pkg with space".into()]),
+            "go test './pkg with space'"
+        );
+    }
+
+    #[test]
+    fn single_argument_command_passes_through_without_quoting() {
+        assert_eq!(
+            join_exec_command(&["ls y && grep x".into()]),
+            "ls y && grep x"
+        );
+        assert_eq!(
+            join_exec_command(&["go".into(), "test".into(), "./pkg with space".into()]),
             "go test './pkg with space'"
         );
     }
